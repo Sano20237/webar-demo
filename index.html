@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>My WebAR</title>
+
+  <!-- ▼A-Frame（WebVR/WebAR用の3Dフレームワーク）を読み込む -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.2.0/dist/aframe.min.js"></script>
+
+  <!-- ▼AR.js（A-Frame版：マーカーAR用）を読み込む -->
+  <!-- これによって <a-marker> タグが使えるようになる -->
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    /* ブラウザ画面の余白を消し、カメラ映像を全画面表示にする */
+    body, html {
+      margin: 0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ▼A-Frame のシーンを作成 -->
+  <!-- arjs="" の中で WebAR の設定を行う -->
+  <a-scene
+    embedded
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+    
+    <!-- ▼マーカーを定義する -->
+    <!-- type="pattern" → pattern-marker.patt を使うマーカー方式 -->
+    <!-- url="marker/pattern-marker.patt" → マーカーのファイル位置 -->
+    <a-marker type="pattern" url="marker/pattern-marker.patt">
+      
+      <!-- ▼マーカーの上に乗せる3Dモデル -->
+      <!-- gltf-model="model/yourmodel.glb" → 3Dモデルファイルの場所 -->
+      <!-- scale → 大きさ調整、position → 位置、rotation → 向き -->
+      <a-entity 
+        gltf-model="model/model.glb"
+        scale="0.5 0.5 0.5"
+        position="0 0 0"
+        rotation="0 0 0">
+      </a-entity>
+
+    </a-marker>
+
+    <!-- ▼カメラを定義（AR.js必須） -->
+    <a-entity camera></a-entity>
+
+  </a-scene>
+</body>
+</html>

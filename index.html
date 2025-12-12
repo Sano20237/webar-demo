@@ -4,24 +4,107 @@
   <meta charset="utf-8" />
   <title>My WebAR</title>
 
-  <!-- ▼A-Frame（WebVR/WebAR用の3Dフレームワーク）を読み込む -->
+  <!-- A-Frame -->
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.2.0/dist/aframe.min.js"></script>
 
-  <!-- ▼AR.js（A-Frame版：マーカーAR用）を読み込む -->
-  <!-- これによって <a-marker> タグが使えるようになる -->
+  <!-- AR.js -->
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
-  <!-- ジェスチャー操作用コンポーネント -->
-<script src="https://cdn.jsdelivr.net/npm/aframe-gesture-detector@0.2.0/dist/aframe-gesture-detector.min.js"></script>
-
   <style>
-    /* ブラウザ画面の余白を消し、カメラ映像を全画面表示にする */
     body, html {
       margin: 0;
       overflow: hidden;
     }
+
+    /* ▼下部固定UI */
+    #ui-controls {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 9999;
+    }
+
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      background: #ffffffcc;
+    }
   </style>
 </head>
+
+<body>
+
+  <!-- ▼WebARシーン -->
+  <a-scene embedded arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+
+    <a-marker type="pattern" url="marker/pattern-ARTEST.patt">
+
+      <!-- 回転や拡大の対象（id必須） -->
+      <a-entity 
+        id="myModel"
+        gltf-model="model/model.glb"
+        scale="0.4 0.4 0.4"
+        position="0 0 0"
+        rotation="0 0 0">
+      </a-entity>
+
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <!-- ▼UIボタン -->
+  <div id="ui-controls">
+    <button id="rotateLeft">◀ 左に回転</button>
+    <button id="rotateRight">右に回転 ▶</button>
+    <button id="scaleDown">－ 縮小</button>
+    <button id="scaleUp">＋ 拡大</button>
+  </div>
+
+  <!-- ▼UIの制御用スクリプト -->
+  <script>
+    const model = document.getElementById("myModel");
+
+    // ボタン：左回転
+    document.getElementById("rotateLeft").onclick = () => {
+      const r = model.getAttribute("rotation");
+      model.setAttribute("rotation", {x: r.x, y: r.y - 10, z: r.z});
+    };
+
+    // ボタン：右回転
+    document.getElementById("rotateRight").onclick = () => {
+      const r = model.getAttribute("rotation");
+      model.setAttribute("rotation", {x: r.x, y: r.y + 10, z: r.z});
+    };
+
+    // ボタン：縮小
+    document.getElementById("scaleDown").onclick = () => {
+      const s = model.getAttribute("scale");
+      model.setAttribute("scale", {
+        x: s.x * 0.9,
+        y: s.y * 0.9,
+        z: s.z * 0.9
+      });
+    };
+
+    // ボタン：拡大
+    document.getElementById("scaleUp").onclick = () => {
+      const s = model.getAttribute("scale");
+      model.setAttribute("scale", {
+        x: s.x * 1.1,
+        y: s.y * 1.1,
+        z: s.z * 1.1
+      });
+    };
+  </script>
+
+</body>
+</html>
 
 <body>
   <!-- ▼A-Frame のシーンを作成 -->
@@ -57,6 +140,7 @@
 </body>
 
 </html>
+
 
 
 

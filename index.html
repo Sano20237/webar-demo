@@ -11,6 +11,9 @@
   <!-- これによって <a-marker> タグが使えるようになる -->
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
+  <!-- ジェスチャー操作用コンポーネント -->
+<script src="https://cdn.jsdelivr.net/npm/aframe-gesture-detector@0.2.0/dist/aframe-gesture-detector.min.js"></script>
+
   <style>
     /* ブラウザ画面の余白を消し、カメラ映像を全画面表示にする */
     body, html {
@@ -31,11 +34,14 @@
     <!-- type="pattern" → pattern-marker.patt を使うマーカー方式 -->
     <!-- url="marker/pattern-marker.patt" → マーカーのファイル位置 -->
     <a-marker type="pattern" url="marker/pattern-ARTEST.patt">
-      
+    <!-- ジェスチャーで操作するためのコンテナ -->
+  　<a-entity id="model-container" gesture-handler>
+     
       <!-- ▼マーカーの上に乗せる3Dモデル -->
       <!-- gltf-model="model/yourmodel.glb" → 3Dモデルファイルの場所 -->
       <!-- scale → 大きさ調整、position → 位置、rotation → 向き -->
-      <a-entity 
+      <a-entity
+        id="myModel"
         gltf-model="model/model.glb"
         scale="0.4 0.4 0.4"
         position="0 0 0"
@@ -51,6 +57,7 @@
 </body>
 
 </html>
+
 
 
 

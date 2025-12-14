@@ -1,0 +1,88 @@
+/* ===== 画面全体 ===== */
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  font-family: sans-serif;
+}
+
+/* ===== UI全体コンテナ ===== */
+#ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none; /* AR操作を邪魔しない */
+  z-index: 9999;
+}
+
+/* クリック可能なUIだけ有効化 */
+#ui img {
+  pointer-events: auto;
+}
+
+/* ===== 回転UI（十字キー） ===== */
+#btn-rotate-up,
+#btn-rotate-down,
+#btn-rotate-left,
+#btn-rotate-right {
+  position: fixed;
+  width: 56px;
+  height: 56px;
+  opacity: 0.85;
+}
+
+/* 上下左右の配置（Figma風） */
+#btn-rotate-up {
+  bottom: 160px;
+  left: 40px;
+}
+
+#btn-rotate-down {
+  bottom: 40px;
+  left: 40px;
+}
+
+#btn-rotate-left {
+  bottom: 100px;
+  left: 0px;
+}
+
+#btn-rotate-right {
+  bottom: 100px;
+  left: 80px;
+}
+
+/* ===== シャッターボタン ===== */
+#btn-shutter {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 72px;
+}
+
+/* ===== 拡大・縮小 ===== */
+#btn-zoom-in,
+#btn-zoom-out {
+  position: fixed;
+  width: 56px;
+  height: 56px;
+}
+
+#btn-zoom-in {
+  bottom: 80px;
+  right: 20px;
+}
+
+#btn-zoom-out {
+  bottom: 20px;
+  right: 20px;
+}
+
+/* ===== 押した時の演出 ===== */
+#ui img:active {
+  transform: scale(0.92);
+  opacity: 1;
+}

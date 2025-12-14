@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
   <meta charset="utf-8" />
   <title>My WebAR</title>
@@ -10,41 +10,21 @@
   <!-- AR.js -->
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
-  <style>
-    body, html {
-      margin: 0;
-      overflow: hidden;
-    }
-
-    /* ▼下部固定UI */
-    #ui-controls {
-      position: fixed;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 10px;
-      z-index: 9999;
-    }
-
-    button {
-      padding: 10px 15px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: none;
-      background: #ffffffcc;
-    }
-  </style>
+  <!-- UI用CSS（後で外部化OK） -->
+  <link rel="stylesheet" href="css/ui.css">
 </head>
 
 <body>
 
   <!-- ▼WebARシーン -->
-  <a-scene embedded arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+  <a-scene
+    embedded
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
 
+    <!-- ▼パターンマーカー -->
     <a-marker type="pattern" url="marker/pattern-ARTEST.patt">
 
-      <!-- 回転や拡大の対象（id必須） -->
+      <!-- ▼操作対象の3Dモデル -->
       <a-entity 
         id="myModel"
         gltf-model="model/model.glb"
@@ -55,91 +35,29 @@
 
     </a-marker>
 
+    <!-- ▼カメラ（必須） -->
     <a-entity camera></a-entity>
   </a-scene>
 
-  <!-- ▼UIボタン -->
-  <div id="ui-controls">
-    <button id="rotateLeft">◀ 左に回転</button>
-    <button id="rotateRight">右に回転 ▶</button>
-    <button id="scaleDown">－ 縮小</button>
-    <button id="scaleUp">＋ 拡大</button>
+  <!-- ▼UI（PNG画像想定） -->
+  <div id="ui">
+    <img id="btn-rotate-up" src="ui/btn-rotate-up.png" alt="rotate up">
+    <img id="btn-rotate-down" src="ui/btn-rotate-down.png" alt="rotate down">
+    <img id="btn-rotate-left" src="ui/btn-rotate-left.png" alt="rotate left">
+    <img id="btn-rotate-right" src="ui/btn-rotate-right.png" alt="rotate right">
+
+    <img id="btn-zoom-in" src="ui/btn-zoom-in.png" alt="zoom in">
+    <img id="btn-zoom-out" src="ui/btn-zoom-out.png" alt="zoom out">
+
+    <img id="btn-shutter" src="ui/btn-shutter.png" alt="shutter">
   </div>
 
-  <!-- ▼UIの制御用スクリプト -->
-  <script>
-    const model = document.getElementById("myModel");
-
-    // ボタン：左回転
-    document.getElementById("rotateLeft").onclick = () => {
-      const r = model.getAttribute("rotation");
-      model.setAttribute("rotation", {x: r.x, y: r.y - 10, z: r.z});
-    };
-
-    // ボタン：右回転
-    document.getElementById("rotateRight").onclick = () => {
-      const r = model.getAttribute("rotation");
-      model.setAttribute("rotation", {x: r.x, y: r.y + 10, z: r.z});
-    };
-
-    // ボタン：縮小
-    document.getElementById("scaleDown").onclick = () => {
-      const s = model.getAttribute("scale");
-      model.setAttribute("scale", {
-        x: s.x * 0.9,
-        y: s.y * 0.9,
-        z: s.z * 0.9
-      });
-    };
-
-    // ボタン：拡大
-    document.getElementById("scaleUp").onclick = () => {
-      const s = model.getAttribute("scale");
-      model.setAttribute("scale", {
-        x: s.x * 1.1,
-        y: s.y * 1.1,
-        z: s.z * 1.1
-      });
-    };
-  </script>
+  <!-- ▼UI制御スクリプト -->
+  <script src="js/ui-control.js"></script>
 
 </body>
 </html>
 
-<body>
-  <!-- ▼A-Frame のシーンを作成 -->
-  <!-- arjs="" の中で WebAR の設定を行う -->
-  <a-scene
-    embedded
-    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
-    
-    <!-- ▼マーカーを定義する -->
-    <!-- type="pattern" → pattern-marker.patt を使うマーカー方式 -->
-    <!-- url="marker/pattern-marker.patt" → マーカーのファイル位置 -->
-    <a-marker type="pattern" url="marker/pattern-ARTEST.patt">
-    <!-- ジェスチャーで操作するためのコンテナ -->
-  　<a-entity id="model-container" gesture-handler>
-     
-      <!-- ▼マーカーの上に乗せる3Dモデル -->
-      <!-- gltf-model="model/yourmodel.glb" → 3Dモデルファイルの場所 -->
-      <!-- scale → 大きさ調整、position → 位置、rotation → 向き -->
-      <a-entity
-        id="myModel"
-        gltf-model="model/model.glb"
-        scale="0.4 0.4 0.4"
-        position="0 0 0"
-        rotation="0 0 0">
-      </a-entity>
-
-    </a-marker>
-
-    <!-- ▼カメラを定義（AR.js必須） -->
-    <a-entity camera></a-entity>
-
-  </a-scene>
-</body>
-
-</html>
 
 
 

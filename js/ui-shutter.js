@@ -12,19 +12,12 @@ shutterBtn.addEventListener("click", async () => {
 
   // ③ A-Frameスクリーンショット
   scene.components.screenshot.capture("perspective");
-  
-  // ④ PNG化
-  const image = canvas.toDataURL("image/png");
 
-  // ⑤ 保存処理
-  downloadImage(image);
-
-  // ⑥ UIを戻す
+  // ④ UIを戻す
   setTimeout(() => {
     uiLayer.style.display = "block";
   }, 300);
   
-  });
 });
 
 function downloadImage(dataUrl) {
@@ -36,3 +29,4 @@ function downloadImage(dataUrl) {
   document.body.removeChild(a);
 
 }
+

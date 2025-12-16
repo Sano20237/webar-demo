@@ -1,39 +1,111 @@
-shutterBtn.addEventListener('click', async () => {
+// ===============================
+// UI & Scene 参照
+// ===============================
+const shutterBtn = document.getElementById("btn-shutter");
+const uiLayer = document.getElementById("ui-layer");
+const scene = document.querySelector("a-scene");
+const marker = document.querySelector("a-marker");
 
-  // UI非表示
-uiLayer.style.display = 'none';
+// ===============================
+// ユーティリティ
+// ===============================
 
-// video & renderer 準備待ち
-const video = await waitForVideo();
-await waitForRenderer(scene);
+// video が使えるまで待つ
+function waitForVideo() {
+  return new Promise(resolve => {
+    const check = () => {
+      const video = document.querySelector("video");
+      if (video && video.videoWidth > 0) {
+        resolve(video);
+      } else {
+        requestAnimationFrame(check);
+      }
+    };
+    check();
+  });
+}
 
-// 背景取得
-const bgCanvas = document.createElement('canvas');
-bgCanvas.width = video.videoWidth;
-bgCanvas.height = video.videoHeight;
-bgCanvas.getContext('2d').drawImage(video, 0, 0);
+// renderer が初期化されるまで待つ
+function waitForRenderer(scene) {
+  return new Promise(resolve => {
+    const check = () => {
+      if (scene.renderer) {
+        resolve();
+      } else {
+        requestAnimationFrame(check);
+      }
+    };
+    check();
+  });
+}
 
-// ★ ここが重要 ★
-await new Promise(r => requestAnimationFrame(r));
-await new Promise(r => requestAnimationFrame(r));
+// ===============================
+// シャッター処理
+// ===============================
+shutterBtn.addEventListener("click", async () => {
 
-// 3D取得
-const threeCanvas = scene.renderer.domElement;
-const threeImage = new Image();
-threeImage.src = threeCanvas.toDataURL('image/png');
+  // マーカー未検出なら撮影しない（重要）
+  if (!marker.object3D.visible) {
+    alert("マーカーを認識してください");
+    return;
+  }
 
-threeImage.onload = () => {
-  const result = document.createElement('canvas');
-  result.width = bgCanvas.width;
-  result.height = bgCanvas.height;
+  // UI 非表示
+  uiLayer.style.display = "none";
 
-  const ctx = result.getContext('2d');
-  ctx.drawImage(bgCanvas, 0, 0);
-  ctx.drawImage(threeImage, 0, 0);
+  // 準備待ち
+  const video = await waitForVideo();
+  await waitForRenderer(scene);
 
-  download(result.toDataURL('image/png'));
-  uiLayer.style.display = 'block';
-};
+  // ===============================
+  // ① 背景（擬似カメラ）取得
+  // ===============================
+  const bgCanvas = document.createElement("canvas");
+  bgCanvas.width = video.videoWidth;
+  bgCanvas.height = video.videoHeight;
+
+  const bgCtx = bgCanvas.getContext("2d");
+  bgCtx.drawImage(video, 0, 0);
+
+  // ===============================
+  // ★ WebGL描画確定待ち（超重要）
+  // ===============================
+  await new Promise(r => requestAnimationFrame(r));
+  await new Promise(r => requestAnimationFrame(r));
+
+  // ===============================
+  // ② 3D取得
+  // ===============================
+  const threeCanvas = scene.renderer.domElement;
+  const threeImage = new Image();
+  threeImage.src = threeCanvas.toDataURL("image/png");
+
+  threeImage.onload = () => {
+
+    // ===============================
+    // ③ 合成
+    // ===============================
+    const resultCanvas = document.createElement("canvas");
+    resultCanvas.width = bgCanvas.width;
+    resultCanvas.height = bgCanvas.height;
+
+    const ctx = resultCanvas.getContext("2d");
+    ctx.drawImage(bgCanvas, 0, 0);
+    ctx.drawImage(threeImage, 0, 0);
+
+    // ===============================
+    // ④ 保存
+    // ===============================
+    const a = document.createElement("a");
+    a.href = resultCanvas.toDataURL("image/png");
+    a.download = "ar_photo.png";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // UI 復帰
+    uiLayer.style.display = "block";
+  };
 });
 
 /*//const 再代入（別の値を入れること）ができない「読み取り専用」の変数を宣言するキーワード
@@ -57,6 +129,7 @@ shutterBtn.addEventListener("click", async () => {
   }, 300);
   
 });*/;
+
 
 
 

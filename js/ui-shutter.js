@@ -1,45 +1,63 @@
-const video = document.querySelector('video');
-const scene = document.querySelector('a-scene');
+const shutterBtn = document.getElementById("btn-shutter");
+const uiLayer = document.getElementById("ui-layer");
+const scene = document.querySelector("a-scene");
 
-if (!video || video.videoWidth === 0) {
-  alert("カメラ映像が準備できていません");
-  return;
-}
+shutterBtn.addEventListener("click", async () => {
 
-if (!scene.renderer) {
-  alert("3D描画がまだ準備できていません");
-  return;
-}
+  // UIを隠す
+  uiLayer.style.display = "none";
 
-// ① 背景（擬似カメラ）
-const bgCanvas = document.createElement('canvas');
-bgCanvas.width = video.videoWidth;
-bgCanvas.height = video.videoHeight;
+  // 1フレーム待つ
+  await new Promise(r => requestAnimationFrame(r));
 
-const bgCtx = bgCanvas.getContext('2d');
-bgCtx.drawImage(video, 0, 0);
+  // ▼ AR.js の video を正しく取得
+  const video = document.querySelector("#arjs-video");
 
-// ② 3Dスクショ
-const threeCanvas = scene.renderer.domElement;
-const threeImage = new Image();
-threeImage.src = threeCanvas.toDataURL('image/png');
+  if (!video || video.videoWidth === 0) {
+    alert("カメラ映像がまだ取得できていません");
+    uiLayer.style.display = "block";
+    return;
+  }
 
-// ③ 合成
-threeImage.onload = () => {
-  const resultCanvas = document.createElement('canvas');
-  resultCanvas.width = bgCanvas.width;
-  resultCanvas.height = bgCanvas.height;
+  if (!scene.renderer) {
+    alert("3D描画が準備できていません");
+    uiLayer.style.display = "block";
+    return;
+  }
 
-  const ctx = resultCanvas.getContext('2d');
-  ctx.drawImage(bgCanvas, 0, 0);
-  ctx.drawImage(threeImage, 0, 0);
+  // ① 背景（擬似カメラ）
+  const bgCanvas = document.createElement("canvas");
+  bgCanvas.width = video.videoWidth;
+  bgCanvas.height = video.videoHeight;
 
-  // ④ 保存
-  const link = document.createElement('a');
-  link.href = resultCanvas.toDataURL('image/png');
-  link.download = 'ar_photo.png';
-  link.click();
-};
+  const bgCtx = bgCanvas.getContext("2d");
+  bgCtx.drawImage(video, 0, 0);
+
+  // ② 3Dスクショ
+  const threeCanvas = scene.renderer.domElement;
+  const threeImage = new Image();
+  threeImage.src = threeCanvas.toDataURL("image/png");
+
+  // ③ 合成
+  threeImage.onload = () => {
+    const resultCanvas = document.createElement("canvas");
+    resultCanvas.width = bgCanvas.width;
+    resultCanvas.height = bgCanvas.height;
+
+    const ctx = resultCanvas.getContext("2d");
+    ctx.drawImage(bgCanvas, 0, 0);
+    ctx.drawImage(threeImage, 0, 0);
+
+    // ④ 保存
+    const link = document.createElement("a");
+    link.href = resultCanvas.toDataURL("image/png");
+    link.download = "ar_photo.png";
+    link.click();
+
+    // UI復帰
+    uiLayer.style.display = "block";
+  };
+});
 
 /*//const 再代入（別の値を入れること）ができない「読み取り専用」の変数を宣言するキーワード
 const shutterBtn = document.getElementById("btn-shutter");
@@ -62,6 +80,7 @@ shutterBtn.addEventListener("click", async () => {
   }, 300);
   
 });*/;
+
 
 
 

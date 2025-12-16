@@ -1,61 +1,42 @@
-const shutterBtn = document.getElementById("btn-shutter");
-const uiLayer = document.getElementById("ui-layer");
-const scene = document.querySelector("a-scene");
+shutterBtn.addEventListener('click', async () => {
 
-shutterBtn.addEventListener("click", async () => {
+  uiLayer.style.display = 'none';
 
-  // UIを隠す
-  uiLayer.style.display = "none";
+  const scene = document.querySelector('a-scene');
 
-  // 1フレーム待つ
+  // ① 両方準備完了まで待つ
+  const video = await waitForVideo();
+  await waitForRenderer(scene);
+
+  // ② 1フレーム余裕を見る
   await new Promise(r => requestAnimationFrame(r));
 
-  // ▼ AR.js の video を正しく取得
-  const video = document.querySelector("#arjs-video");
-
-  if (!video || video.videoWidth === 0) {
-    alert("カメラ映像がまだ取得できていません");
-    uiLayer.style.display = "block";
-    return;
-  }
-
-  if (!scene.renderer) {
-    alert("3D描画が準備できていません");
-    uiLayer.style.display = "block";
-    return;
-  }
-
-  // ① 背景（擬似カメラ）
-  const bgCanvas = document.createElement("canvas");
+  // ③ 背景取得
+  const bgCanvas = document.createElement('canvas');
   bgCanvas.width = video.videoWidth;
   bgCanvas.height = video.videoHeight;
+  bgCanvas.getContext('2d').drawImage(video, 0, 0);
 
-  const bgCtx = bgCanvas.getContext("2d");
-  bgCtx.drawImage(video, 0, 0);
-
-  // ② 3Dスクショ
+  // ④ 3D取得
   const threeCanvas = scene.renderer.domElement;
   const threeImage = new Image();
-  threeImage.src = threeCanvas.toDataURL("image/png");
+  threeImage.src = threeCanvas.toDataURL('image/png');
 
-  // ③ 合成
   threeImage.onload = () => {
-    const resultCanvas = document.createElement("canvas");
-    resultCanvas.width = bgCanvas.width;
-    resultCanvas.height = bgCanvas.height;
+    const result = document.createElement('canvas');
+    result.width = bgCanvas.width;
+    result.height = bgCanvas.height;
 
-    const ctx = resultCanvas.getContext("2d");
+    const ctx = result.getContext('2d');
     ctx.drawImage(bgCanvas, 0, 0);
     ctx.drawImage(threeImage, 0, 0);
 
-    // ④ 保存
-    const link = document.createElement("a");
-    link.href = resultCanvas.toDataURL("image/png");
-    link.download = "ar_photo.png";
-    link.click();
+    const a = document.createElement('a');
+    a.href = result.toDataURL('image/png');
+    a.download = 'ar_photo.png';
+    a.click();
 
-    // UI復帰
-    uiLayer.style.display = "block";
+    uiLayer.style.display = 'block';
   };
 });
 
@@ -80,6 +61,7 @@ shutterBtn.addEventListener("click", async () => {
   }, 300);
   
 });*/;
+
 
 
 

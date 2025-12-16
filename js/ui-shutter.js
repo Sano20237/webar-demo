@@ -20,13 +20,6 @@ shutterBtn.addEventListener("click", async () => {
   
 });
 
-function downloadImage(dataUrl) {
-  const a = document.createElement("a");
-  a.href = dataUrl;
-  a.download = "webar_capture.png";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
 
-}
+
 

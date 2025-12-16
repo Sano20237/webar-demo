@@ -1,196 +1,133 @@
-/**
- * ui-shutter.js
- * WebAR 撮影（video + Three.js 合成）安定版
- *
- * 前提：
- * - Three.js renderer は preserveDrawingBuffer: true
- * - AR.js marker を使用（marker.object3D.visible）
- * - video は <video> 要素（getUserMedia / AR.js 管理）
- */
+// ===============================
+// 要素取得
+// ===============================
+const shutterBtn = document.getElementById("btn-shutter");
+const uiLayer = document.getElementById("ui-layer");
+const scene = document.querySelector("a-scene");
 
-/* ================================
-   参照DOM
-================================ */
+// ===============================
+// ユーティリティ
+// ===============================
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-const shutterBtn = document.getElementById("shutter-btn");
-const uiLayer   = document.getElementById("ui-layer");
-
-/* ================================
-   外部依存（必須）
-================================ */
-
-// Three.js
-// scene.renderer.domElement が存在すること
-// scene.renderer instanceof THREE.WebGLRenderer
-
-// AR.js
-// marker.object3D.visible が取得できること
-// const marker = ...
-
-// video
-// const video = document.querySelector("video");
-
-/* ================================
-   Utility
-================================ */
-
-/** requestAnimationFrame を1フレーム待つ */
-const raf = () => new Promise(r => requestAnimationFrame(r));
-
-/** video が描画可能になるまで待つ */
-function waitForValidVideo(video) {
+function waitForVideo() {
   return new Promise(resolve => {
-    function check() {
-      if (video && video.videoWidth > 0 && video.readyState >= 2) {
+    const check = () => {
+      const video = document.querySelector("video");
+      if (video && video.videoWidth > 0 && video.videoHeight > 0) {
         resolve(video);
       } else {
         requestAnimationFrame(check);
       }
-    }
+    };
     check();
   });
 }
 
-/** renderer が描画可能になるまで待つ */
 function waitForRenderer(scene) {
   return new Promise(resolve => {
-    function check() {
-      if (
-        scene &&
-        scene.renderer &&
-        scene.renderer.domElement &&
-        scene.renderer.domElement.width > 0
-      ) {
+    const check = () => {
+      if (scene.renderer && scene.renderer.domElement) {
         resolve();
       } else {
         requestAnimationFrame(check);
       }
-    }
+    };
     check();
   });
 }
 
-/** マーカーが安定して visible なフレームを待つ */
-function waitForStableMarker(marker, stableFrames = 5) {
-  return new Promise((resolve, reject) => {
-    let count = 0;
-    let timeout = 120; // 最大約2秒
-
-    function check() {
-      if (marker.object3D.visible) {
-        count++;
-        if (count >= stableFrames) {
-          resolve();
-          return;
-        }
-      } else {
-        count = 0;
-      }
-
-      timeout--;
-      if (timeout <= 0) {
-        reject(new Error("Marker not stable"));
-        return;
-      }
-      requestAnimationFrame(check);
-    }
-    check();
-  });
-}
-
-/** dataURL 妥当性チェック */
-function isValidDataURL(url) {
-  return typeof url === "string" && url.length > 1000;
-}
-
-/** ダウンロード処理 */
-function download(dataUrl, filename = "ar-photo.png") {
+function downloadImage(dataUrl) {
   const a = document.createElement("a");
   a.href = dataUrl;
-  a.download = filename;
+  a.download = "ar_photo.png";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
 }
 
-/* ================================
-   メイン処理
-================================ */
-
+// ===============================
+// シャッター処理
+// ===============================
 shutterBtn.addEventListener("click", async () => {
 
-  if (shutterBtn.disabled) return;
-  shutterBtn.disabled = true;
+  // UI非表示
+  uiLayer.style.display = "none";
 
-  try {
+  // カメラ & renderer 準備待ち
+  const video = await waitForVideo();
+  await waitForRenderer(scene);
 
-    /* ---------- 安定状態待ち ---------- */
+  // ===== 背景（擬似カメラ）取得 =====
+  const bgCanvas = document.createElement("canvas");
+  bgCanvas.width  = video.videoWidth;
+  bgCanvas.height = video.videoHeight;
 
-    await waitForStableMarker(marker, 5);
+  const bgCtx = bgCanvas.getContext("2d");
+  bgCtx.drawImage(video, 0, 0, bgCanvas.width, bgCanvas.height);
 
-    uiLayer.style.display = "none";
+  // ===== 重要：2フレーム待つ =====
+  await new Promise(r => requestAnimationFrame(r));
+  await new Promise(r => requestAnimationFrame(r));
 
-    const video = await waitForValidVideo(
-      document.querySelector("video")
-    );
+  // ===== Three.js 取得 =====
+  const threeCanvas = scene.renderer.domElement;
+  const threeImage = new Image();
+  threeImage.src = threeCanvas.toDataURL("image/png");
 
-    await waitForRenderer(scene);
+  threeImage.onload = () => {
 
-    /* ---------- 背景キャプチャ ---------- */
+    // ===== 合成キャンバス =====
+    const resultCanvas = document.createElement("canvas");
+    resultCanvas.width  = bgCanvas.width;
+    resultCanvas.height = bgCanvas.height;
 
-    const bgCanvas = document.createElement("canvas");
-    bgCanvas.width  = video.videoWidth;
-    bgCanvas.height = video.videoHeight;
+    const ctx = resultCanvas.getContext("2d");
 
-    const bgCtx = bgCanvas.getContext("2d");
-    bgCtx.drawImage(video, 0, 0);
+    // --- 背景描画 ---
+    ctx.drawImage(bgCanvas, 0, 0);
 
-    /* ---------- 描画安定待ち ---------- */
+    // --- 比率補正（超重要） ---
+    const bw = bgCanvas.width;
+    const bh = bgCanvas.height;
 
-    await raf();
-    await raf();
+    const tw = threeImage.width;
+    const th = threeImage.height;
 
-    /* ---------- Three.js キャプチャ ---------- */
+    const bgRatio = bw / bh;
+    const threeRatio = tw / th;
 
-    const threeCanvas = scene.renderer.domElement;
-    const threeDataUrl = threeCanvas.toDataURL("image/png");
+    let sx, sy, sw, sh;
 
-    if (!isValidDataURL(threeDataUrl)) {
-      throw new Error("Three.js capture failed");
+    if (threeRatio > bgRatio) {
+      // 横長 → 左右トリミング
+      sh = th;
+      sw = th * bgRatio;
+      sx = (tw - sw) / 2;
+      sy = 0;
+    } else {
+      // 縦長 → 上下トリミング
+      sw = tw;
+      sh = tw / bgRatio;
+      sx = 0;
+      sy = (th - sh) / 2;
     }
 
-    /* ---------- 合成 ---------- */
+    // --- 3D合成 ---
+    ctx.drawImage(
+      threeImage,
+      sx, sy, sw, sh,   // 切り出し
+      0, 0, bw, bh      // 背景にフィット
+    );
 
-    const threeImage = new Image();
-    threeImage.src = threeDataUrl;
+    // ===== 保存 =====
+    downloadImage(resultCanvas.toDataURL("image/png"));
 
-    await new Promise(resolve => {
-      threeImage.onload = resolve;
-    });
-
-    const result = document.createElement("canvas");
-    result.width  = bgCanvas.width;
-    result.height = bgCanvas.height;
-
-    const ctx = result.getContext("2d");
-    ctx.drawImage(bgCanvas, 0, 0);
-    ctx.drawImage(threeImage, 0, 0);
-
-    /* ---------- ダウンロード ---------- */
-
-    download(result.toDataURL("image/png"));
-
-  } catch (err) {
-
-    console.warn("AR capture failed:", err);
-    alert("撮影に失敗しました。\nもう一度お試しください。");
-
-  } finally {
-
+    // UI復帰
     uiLayer.style.display = "block";
-    shutterBtn.disabled = false;
-
-  }
+  };
 });
 
 /*//const 再代入（別の値を入れること）ができない「読み取り専用」の変数を宣言するキーワード
@@ -214,6 +151,7 @@ shutterBtn.addEventListener("click", async () => {
   }, 300);
   
 });*/;
+
 
 
 

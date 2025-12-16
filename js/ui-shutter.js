@@ -1,43 +1,39 @@
 shutterBtn.addEventListener('click', async () => {
 
-  uiLayer.style.display = 'none';
+  // UI非表示
+uiLayer.style.display = 'none';
 
-  const scene = document.querySelector('a-scene');
+// video & renderer 準備待ち
+const video = await waitForVideo();
+await waitForRenderer(scene);
 
-  // ① 両方準備完了まで待つ
-  const video = await waitForVideo();
-  await waitForRenderer(scene);
+// 背景取得
+const bgCanvas = document.createElement('canvas');
+bgCanvas.width = video.videoWidth;
+bgCanvas.height = video.videoHeight;
+bgCanvas.getContext('2d').drawImage(video, 0, 0);
 
-  // ② 1フレーム余裕を見る
-  await new Promise(r => requestAnimationFrame(r));
+// ★ ここが重要 ★
+await new Promise(r => requestAnimationFrame(r));
+await new Promise(r => requestAnimationFrame(r));
 
-  // ③ 背景取得
-  const bgCanvas = document.createElement('canvas');
-  bgCanvas.width = video.videoWidth;
-  bgCanvas.height = video.videoHeight;
-  bgCanvas.getContext('2d').drawImage(video, 0, 0);
+// 3D取得
+const threeCanvas = scene.renderer.domElement;
+const threeImage = new Image();
+threeImage.src = threeCanvas.toDataURL('image/png');
 
-  // ④ 3D取得
-  const threeCanvas = scene.renderer.domElement;
-  const threeImage = new Image();
-  threeImage.src = threeCanvas.toDataURL('image/png');
+threeImage.onload = () => {
+  const result = document.createElement('canvas');
+  result.width = bgCanvas.width;
+  result.height = bgCanvas.height;
 
-  threeImage.onload = () => {
-    const result = document.createElement('canvas');
-    result.width = bgCanvas.width;
-    result.height = bgCanvas.height;
+  const ctx = result.getContext('2d');
+  ctx.drawImage(bgCanvas, 0, 0);
+  ctx.drawImage(threeImage, 0, 0);
 
-    const ctx = result.getContext('2d');
-    ctx.drawImage(bgCanvas, 0, 0);
-    ctx.drawImage(threeImage, 0, 0);
-
-    const a = document.createElement('a');
-    a.href = result.toDataURL('image/png');
-    a.download = 'ar_photo.png';
-    a.click();
-
-    uiLayer.style.display = 'block';
-  };
+  download(result.toDataURL('image/png'));
+  uiLayer.style.display = 'block';
+};
 });
 
 /*//const 再代入（別の値を入れること）ができない「読み取り専用」の変数を宣言するキーワード
@@ -61,6 +57,7 @@ shutterBtn.addEventListener("click", async () => {
   }, 300);
   
 });*/;
+
 
 
 
